@@ -1,0 +1,43 @@
+# Private and derived data
+data/
+inputs/
+outputs/
+results/
+logs/
+private/
+*.nii
+*.nii.gz
+*.npy
+*.npz
+*.mat
+*.h5
+*.hdf5
+*.pkl
+*.pickle
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+config/paths.local.yaml
+*.pem
+*.key
+id_rsa*
+id_ed25519*
+
+# Python/R/editor artifacts
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.Rhistory
+.RData
+.Rproj.user/
+.venv/
+venv/
+.idea/
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db

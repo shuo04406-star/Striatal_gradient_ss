@@ -1,0 +1,28 @@
+# Copy this file outside version control and replace null values locally.
+# Never commit subject-level inputs or credentials.
+analysis_root: null
+current64_root: null
+python_vendor: null
+
+reference375:
+  denoising_manifest: null
+  denoising_output: null
+  denoising_qc: null
+  fingerprint_directory: null
+  group_mean_fingerprint: null
+  voxel_coordinates: null
+
+clinical64:
+  matched_denoising_root: null
+  source_manifest: null
+  group_table: null
+  current_2608_mask: null
+  exact_row_mapping_2847_to_2608: null
+  current_bin_table: null
+
+# Environment-variable interface used by the retained scripts:
+# STRIATAL_ANALYSIS_ROOT, STRIATAL_CURRENT64_ROOT, STRIATAL_PYTHON_VENDOR,
+# STRIATAL_CLINICAL64_DENOISE_ROOT, STRIATAL_CURRENT64_MANIFEST,
+# STRIATAL_CURRENT64_GROUP_TABLE, STRIATAL_CURRENT2608_MASK,
+# STRIATAL_375_DENOISE_SCRIPT, STRIATAL_HISTORICAL_ARCHIVE,
+# STRIATAL_PROJECT_ROOT, and RSCRIPT.
