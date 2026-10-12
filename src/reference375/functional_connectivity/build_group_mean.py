@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 """Build the 375-person group fingerprint as an arithmetic subject mean.
 
-This release implementation is a reconstructed, reviewed producer. It is not
-the recovered historical execution script. Input fingerprints remain private
-and are never bundled with the repository.
+Input fingerprints remain private and are never bundled with the repository.
 """
 
 from __future__ import annotations

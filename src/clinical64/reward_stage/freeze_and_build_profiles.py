@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """CURRENT64 canonical rerun, stage 1 (Steps 1--5 only).
 
-This script freezes the exact 64-subject inputs, independently audits every
+This script freezes the exact 64-subject inputs, validates every
 2608 x 65 Fisher-z fingerprint, rebuilds Subject x Bin x ROI profiles from
 the fingerprints using canonical Definition A, aggregates the frozen reward
 stages, and compares the rebuilt stage table with the historical stage table.

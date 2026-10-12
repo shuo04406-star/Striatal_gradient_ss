@@ -1,187 +1,242 @@
-# Striatal Functional Connectivity Gradients
+# Striatal Functional Connectivity Gradient Pipeline
 
-This private research-code repository contains the audited analysis programs for a 375-person reference gradient and a 64-person clinical cohort (32 healthy controls and 32 participants with schizophrenia). It is a code release, not a data release. No subject-level imaging, connectivity, demographic, diagnostic, behavioral, or clinical data are included.
+This repository contains the executable analysis code for a 375-participant
+striatal reference gradient and a 64-participant individual-gradient analysis.
+It is a code release: imaging data, subject-level matrices, clinical data,
+atlases, masks, and frozen result arrays are not distributed.
 
-## Scientific background and questions
+## Pipeline at a glance
 
-The project characterizes a voxelwise striatal functional-connectivity gradient and asks whether reward-stage connectivity varies along that gradient, whether those profiles differ between clinical groups, and where patient profiles depart from a healthy-control normative reference. The clinical analyses additionally examine contributions from SMA/IFG-related ROI families and associations with TEPS/ACIPS measures.
+    375 preprocessed resting-state runs
+      -> matched denoising
+      -> 2847 striatal-voxel + 65 ROI time series
+      -> per-subject Pearson r
+      -> per-subject Fisher z
+      -> elementwise mean of 375 Fisher-z matrices
+      -> BrainSpace normalized-angle diffusion map (10 components)
+      -> explicit G1 orientation and 10-bin definitions
 
-The central scientific questions are:
+    64 preprocessed runs
+      -> the same denoising model
+      -> 2608 x 65 Fisher-z fingerprints in the common voxel space
+      -> individual 10-component diffusion-map embeddings
+      -> component-wise sign orientation to the mapped 375 reference
+      -> centered 10-dimensional orthogonal Procrustes alignment
+      -> branch-specific gradient/bin profiles and statistical analyses
 
-1. How does striatal connectivity to 65 cortical/subcortical ROIs vary along reference G1?
-2. Does the G1 relationship differ between anticipation and outcome reward stages?
-3. Do these stage-dependent profiles differ between HC and SZ groups?
-4. Where do SZ profiles deviate from HC normative profiles, and which ROI subfamilies contribute?
-5. Are subject-level gradient effects associated with clinical measures?
+The reference connectome is the mean of subject-level Fisher-z connectivity
+matrices. It is not an average of subject-level gradient embeddings. No inverse
+Fisher transform is applied before gradient fitting.
 
-## Reference cohort: 375 participants
+## Main entry points
 
-The reference pipeline denoises selected resting-state runs, extracts striatal voxel and 65-ROI time series, and computes a 2847 x 65 Fisher-z connectivity fingerprint for each participant. The reference group fingerprint is the arithmetic elementwise mean of the 375 Fisher-z fingerprints. It is **not** an average of 375 individual gradient embeddings.
+| Stage | Entry point | Principal output |
+|---|---|---|
+| Reference denoising | src/reference375/preprocessing/denoise_selected_runs.py | Denoised BOLD and run QC |
+| 2847-voxel/65-ROI masks | src/reference375/functional_connectivity/prepare_reference_masks.py | Prepared masks, ROI manifest, voxel coordinates |
+| 375 subject connectomes | src/reference375/functional_connectivity/build_reference_connectome.py | 375 individual 2847 x 65 Fisher-z matrices and their group mean |
+| Group mean from frozen matrices | src/reference375/functional_connectivity/build_group_mean.py | 2847 x 65 group mean |
+| Reference gradients | src/reference375/gradient_construction/build_reference_gradients.py | Reference/manuscript 2847 x 10 gradients and eigenvalues |
+| Equal-rank reference bins | src/reference375/gradient_construction/build_voxel_bins.py | Row-aligned G1/10-bin table |
+| 64-person matched denoising | src/clinical64/preprocessing/run_matched_denoising.py | Denoised clinical-cohort BOLD |
+| 64-person connectivity | src/clinical64/functional_connectivity/build_timeseries_and_fingerprints.py | 64 x 2608 x 65 Fisher-z stack |
+| Reference common-space map | src/clinical64/individual_gradients/map_reference_to_common.py | Directly indexed 2608 x 10 reference |
+| Individual gradients/alignment | src/clinical64/individual_gradients/run_fixed_reference_gradients.py | Raw, sign-oriented, and Procrustes-aligned subject gradients |
+| Reward-stage bin profiles | src/clinical64/reward_stage/freeze_and_build_profiles.py | Subject x bin x ROI/stage tables |
+| Reward-stage models | src/clinical64/reward_stage/run_stage_analyses.py | Models A/B/C and related tables |
 
-BrainSpace diffusion-map gradients are fit to that 2847 x 65 group-mean fingerprint with:
-
-- `n_components=10`
-- `approach="dm"`
-- `kernel="normalized_angle"`
-- `sparsity=0.0`
-- `random_state=0`
-- no ROI-dimension z-scoring
-
-The recovered implementation orients G1 so that its Pearson correlation with voxel z coordinate is positive. Server Current and Backup gradient arrays were numerically identical after component-wise sign alignment: G1 was exactly sign-reversed and G2-G10 were identical. Therefore hash inequality alone is not evidence of a different embedding.
-
-The group mean was independently reconstructed from 375 frozen fingerprints and agreed with the frozen group mean at `r=0.9999999999998823`, RMSE `2.7126e-08`, and maximum absolute difference `4.1535e-07`. The downstream G1 reconstruction showed high agreement with the historical result. The original raw-image preprocessing was not rerun, so this is not an end-to-end raw-image reproduction.
-
-The release contains a reviewed reconstruction of the group-mean producer and a recovered gradient reconstruction/audit. The exact historical orientation/bin writer was not recovered; the release-native bin writer is labeled `RECONSTRUCTED` and requires an explicit sign.
-
-Ten G1 bins are assigned by a stable ascending rank and deterministic equal-count labels. The 375 Stage x G1 model uses the frozen 2847-row G1/bin table and centers the bin coordinate as `G1_bin - 5.5`.
-
-## Clinical cohort: 64 participants
-
-The clinical workflow applies the 375-matched denoising and FC construction to 64 participants, yielding 2608 x 65 Fisher-z fingerprints. The 2608 common-mask rows are obtained from the 2847 reference voxel space with the validated mapping whose SHA-256 begins `bb12bfa947c09778`. The mapping is a row-index selection that preserves exact voxel order; it must not be regenerated by nearest-coordinate matching.
-
-Individual gradients are embedded with the same BrainSpace settings, component-wise sign-oriented to the fixed 375 reference, cast through the historical float32 intermediate, and aligned by a ten-component orthogonal Procrustes rotation. The 64-person group gradient is a QC result and is not the individual-gradient reference.
-
-### G1/bin branches
-
-The following branches are intentionally distinct and must not be silently unified:
-
-- **Reward-stage Definition A:** fixed 375 reference G1/bins mapped to 2608 rows and used for reward-stage profiles and Models A/B/C.
-- **Individual-G1 Definition B:** subject-specific individual G1 values used for individual-gradient analyses.
-- **Old normative-deviation bins:** equal-rank bins were assigned in the full 2847 space and then mapped to 2608 rows.
-- **Current-bin branch:** the locked current table (`SHA-256 26d268283702db209940198e76b8630585e54259cd742016951aaa7d8427292a`) is mapped to 2608 rows and used by current normative, stage-specific, and SMA/IFG analyses.
-
-Definition A and B have 16 audited boundary-row differences. Old and current normative bins differ at five audited voxel rows. These are preserved analysis definitions, not errors to be averaged away.
-
-### Reward-stage and statistical analyses
-
-The reward-stage split contains 43 anticipation ROIs, 19 outcome ROIs, and 3 excluded midbrain/pallidal ROIs. The principal continuous-gradient models are:
-
-- Model A: `Group * Stage * G1`
-- Model B: Model A plus age, sex, and mean FD
-- Model C: Model B plus prespecified gradient-sensitive covariate interactions
-
-The 64-person Models A/B/C and their recorded outputs were numerically reproduced from frozen analysis tables. Normative deviation uses HC leave-one-out references for HC participants and all 32 HC participants as the reference for each SZ participant. Current-bin normative, stage-specific profile, SMA/IFG contribution, and clinical-association outputs were independently checked against frozen inputs.
-
-The categorical Group x Stage x Bin analysis is inference-framework sensitive even when the same 43-column fixed-effect design and the same nine-dimensional interaction restriction are used:
-
-- robust exchangeable GEE Wald test: `p=0.001753`
-- adjusted subject-clustered OLS Wald F test: `p=0.008031`
-- random-intercept MixedLM ML likelihood-ratio test: `p=0.930344`
-
-The discrepancy is driven principally by robust sandwich versus model-based covariance assumptions, with additional Wald-versus-LRT differences; it is not resolved by choosing the smallest p value. There is insufficient historical evidence that any one framework was prespecified as the primary categorical inference. The release therefore retains **`PRIMARY_INFERENCE_FRAMEWORK_UNRESOLVED`** and requires transparent reporting of all three results. This limitation concerns the categorical sensitivity analysis and does not invalidate the separately reproduced continuous Models A/B/C.
-
-The canonical rebuild script also retains the earlier unadjusted subject-clustered OLS result (`p=0.007900`). The final `p=0.008031` value is the covariate-adjusted, harmonized-design diagnostic. These values answer the same nine-degree-of-freedom scientific restriction under different fixed-design specifications and must not be conflated.
-
-## Repository layout
-
-```text
-config/                         path template only
-environments/                   Python/Conda dependency specifications
-src/reference375/               reference-cohort pipeline and reconstructions
-src/clinical64/                 clinical pipeline and branch-specific analyses
-validation/                     saved-output audits and data-free smoke tests
-provenance/                     original hashes and reproducibility status
-docs/                           release and branch documentation
-```
-
-`PRIMARY` denotes a principal analysis implementation supported by audit evidence. `SUPPORTING` denotes necessary helper or validation code. `RECONSTRUCTED` denotes a later implementation shown to reproduce a defined result but not represented as the historical execution script. Historical and unverified scripts are documented in provenance but are not placed in the runnable source tree.
+The remaining programs under src/clinical64 are the retained current-bin,
+stage-specific, SMA/IFG, and frozen old-bin downstream analyses. They are kept
+separate because they consume different, prespecified bin definitions.
 
 ## Environment
 
-Python 3.11 is recommended. Create an isolated environment with either:
+Python 3.11 is recommended.
 
-```bash
-conda env create -f environments/environment.yml
-conda activate striatal-gradient-analysis
-```
+    conda env create -f environments/environment.yml
+    conda activate striatal-gradient-analysis
 
 or:
 
-```bash
-python -m venv .venv
-python -m pip install -r environments/requirements.txt
-```
+    python -m venv .venv
+    python -m pip install -r environments/requirements.txt
 
-No package installation is performed by the analysis scripts. R is not required for the retained Python analyses. The embedded-Python shell modules require Bash plus the Python environment above.
+The three shell entry points require Bash. Copy config/paths.example.yaml
+outside version control and fill it with private paths, or use the environment
+variables named in that template.
 
-## Reproduction instructions
+## Reference pipeline
 
-Copy `config/paths.example.yaml` to an untracked local configuration and mount only approved private inputs. The retained historical-layout scripts use environment variables so private locations are not committed:
+### 1. Denoise the selected 375 runs
 
-```bash
-export STRIATAL_ANALYSIS_ROOT=/path/to/private/analysis_root
-export STRIATAL_CURRENT64_ROOT=/path/to/private/current64_rerun
-export STRIATAL_CURRENT2608_MASK=/path/to/private/current64_mask.nii.gz
-```
+The input TSV requires subject, run, bold_file, and confounds_file. Defaults
+reproduce the retained preprocessing: 24 motion regressors, first five aCompCor
+regressors, FD spike regressors above 0.5 mm, removal of non-steady-state
+volumes, detrending, 0.01-0.08 Hz filtering, no smoothing, and no global-signal
+regression.
 
-The 64-person matched-denoising wrapper uses the included 375 denoising module by default; `STRIATAL_375_DENOISE_SCRIPT` may be set only when an audited alternate copy is required.
+    python src/reference375/preprocessing/denoise_selected_runs.py \
+      --input-tsv /private/reference_runs.tsv \
+      --out-root /private/reference_denoised \
+      --qc-out /private/reference_denoising_qc.tsv \
+      --n-proc 1
 
-To reconstruct the 375 group-mean fingerprint from approved frozen subject fingerprints:
+### 2. Prepare the striatal seed and ordered ROI masks
 
-```bash
-python src/reference375/functional_connectivity/build_group_mean.py \
-  --fingerprint-dir /path/to/private/reference_fingerprints \
-  --output /path/to/private/output/group_mean_voxel_by_roi_fisherz.npy
-```
+roi_source_masks.tsv requires roi_id, roi_name, and mask_file. Masks are
+nearest-neighbour resampled to the supplied reference grid and binarized at
+greater than zero. The 2847-row seed is the union of VST, Caudate, and Putamen.
+The expected 65-column order is documented in
+config/reference_roi_order_65.tsv.
 
-To rerun the recovered group-gradient comparison in a private historical-layout analysis root:
+Run the no-write preflight first:
 
-```bash
-STRIATAL_ANALYSIS_ROOT=/path/to/private/analysis_root \
-  python src/reference375/gradient_construction/reproduce_group_gradient.py
-```
+    python src/reference375/functional_connectivity/prepare_reference_masks.py \
+      --reference-image /private/reference_grid_or_denoised_bold.nii.gz \
+      --vst-mask /private/VST.nii.gz \
+      --caudate-mask /private/Caudate.nii.gz \
+      --putamen-mask /private/Putamen.nii.gz \
+      --roi-source-manifest /private/roi_source_masks.tsv \
+      --output-dir /private/prepared_reference_masks \
+      --check-only
 
-To build a reviewable 10-bin table with an explicitly documented orientation:
+After reviewing the inputs, repeat without --check-only.
 
-```bash
-python src/reference375/gradient_construction/build_voxel_bins.py \
-  --gradients /path/to/private/group_gradients.npy \
-  --coordinates /path/to/private/seed_voxel_coordinates.tsv \
-  --g1-sign 1 \
-  --output /path/to/private/voxel_G1_and_10bin.tsv
-```
+### 3. Build subject fingerprints and the reference connectome
 
-For the clinical canonical rebuild, first inspect all private inputs without writing outputs:
+reference_subjects.tsv requires subject and output_file; run is optional.
+reference_roi_manifest.tsv requires roi_id, roi_name, and either prepared_mask
+or mask_file.
 
-```bash
-python src/clinical64/reward_stage/freeze_and_build_profiles.py \
-  --project-root /path/to/private/project \
-  --output-root /path/to/private/current64_rerun \
-  --check-only
-```
+    python src/reference375/functional_connectivity/build_reference_connectome.py \
+      --subject-manifest /private/reference_subjects.tsv \
+      --seed-mask /private/prepared_reference_masks/whole_striatum_seed_mask_current_ref.nii.gz \
+      --roi-manifest /private/prepared_reference_masks/roi65_manifest_current_ref.tsv \
+      --output-dir /private/reference_connectome \
+      --check-only
 
-After an input review, omit `--check-only` to write a new private rerun directory. Then set `STRIATAL_CURRENT64_ROOT` and run `run_stage_analyses.py`. Normative, stage-specific, and SMA/IFG shell programs are separate because they use different locked bin branches.
+Repeat without --check-only to calculate the matrices. For every subject, seed
+and ROI time series are standardized over time with sample SD (ddof=1), Pearson
+correlation is computed as the standardized dot product divided by T-1, values
+are clipped to [-0.999999, 0.999999], and arctanh is applied. The output group
+mean is the arithmetic elementwise mean in Fisher-z space.
 
-## Lightweight validation
+If the 375 subject matrices already exist, rebuild only their mean with:
 
-These commands do not use scientific data and do not establish scientific reproduction:
+    python src/reference375/functional_connectivity/build_group_mean.py \
+      --fingerprint-dir /private/reference_connectome/individual_fingerprints \
+      --output /private/reference_connectome/group_mean_voxel_by_roi_fisherz.npy
 
-```bash
-python -m compileall -q src validation
-python validation/check_dependencies.py
-python validation/smoke_test.py
-python validation/validate_embedded_python.py
-bash -n src/clinical64/normative_deviation/run_current_bin_analysis.sh
-bash -n src/clinical64/reward_stage/run_stage_specific_current_bins.sh
-bash -n src/clinical64/sma_ifg/run_bin10_subfamily.sh
-```
+### 4. Fit and orient the reference gradients
 
-Saved-output audit programs under `validation/` require the approved frozen private analysis directory. Their default behavior is read-only with respect to source inputs, but some write new audit outputs and enforce no-overwrite policies.
+    python src/reference375/gradient_construction/build_reference_gradients.py \
+      --group-connectome /private/reference_connectome/group_mean_voxel_by_roi_fisherz.npy \
+      --coordinates /private/prepared_reference_masks/seed_voxel_coordinates.tsv \
+      --orientation-template /private/frozen_reference/group_gradients.npy \
+      --output-dir /private/reference_gradients
 
-## Data availability and limitations
+The fixed parameters are approach=dm, kernel=normalized_angle,
+n_components=10, sparsity=0.0, and random_state=0, with no additional
+ROI-dimension z-scoring and no explicit diffusion time. The optional template
+is used only to stabilize component signs; it does not rescale or reorder
+components.
 
-This repository intentionally excludes raw/denoised BOLD images, NIfTI masks without confirmed redistribution permission, time series, subject-level FC matrices, individual gradients, subject identifiers, diagnoses, demographics, motion tables, TEPS/ACIPS values, credentials, and private absolute paths. `.gitignore` provides a second guard but is not a substitute for reviewing the manifest before every commit.
+Because eigenvector signs are arbitrary, two explicit G1 orientations are
+written:
 
-Reproduction levels differ by module:
+- group_gradients.npy: the positive-z reference convention used by the retained
+  individual-gradient pipeline;
+- group_gradients_manuscript.npy: the final manuscript convention,
+  G1_manuscript = -G1_reference, with G2-G10 unchanged.
 
-- 375 group mean/G1: reproducible from the private frozen 375 fingerprint set; full image preprocessing was not rerun.
-- 375 Stage x G1: numerical refit verified from the frozen 7500-row table; upstream data remain private.
-- 64 Models A/B/C: numerically reproduced from frozen private inputs.
-- 64 old/current normative, stage-specific, SMA/IFG, and clinical-association modules: verified from frozen private arrays/tables, which are not distributable here.
-- Some historical producer scripts, including the exact original orientation/bin writer and the historical categorical checkpoint producer, were not recovered. Verified later reconstructions are labeled accordingly.
+### 5. Construct the equal-rank 10-bin table
 
-Repository code is distributed under the remote repository's MIT License. That license applies to the software only and does not grant permission to redistribute participant data, derived subject-level data, or third-party atlases/masks.
+For the manuscript-oriented array, no additional sign reversal is needed:
 
-## Provenance and citation
+    python src/reference375/gradient_construction/build_voxel_bins.py \
+      --gradients /private/reference_gradients/group_gradients_manuscript.npy \
+      --coordinates /private/prepared_reference_masks/seed_voxel_coordinates.tsv \
+      --g1-sign 1 \
+      --output /private/reference_gradients/voxel_G1_and_10bin.tsv
 
-See `GITHUB_FILE_MANIFEST.tsv`, `provenance/ORIGINAL_CODE_PROVENANCE.tsv`, and `provenance/REPRODUCIBILITY_VALIDATION.tsv`. The original SHA-256 of each recovered script is retained alongside the hash of its parameterized release copy. Update `CITATION.cff` with the final author list and repository URL before external citation.
+This entry creates the stable equal-rank 375-stage definition. The separately
+frozen current-bin table used by current normative/stage/SMA-IFG analyses is a
+distinct input and must not be silently regenerated or substituted.
+
+## 64-participant individual pipeline
+
+The retained 64-person programs use environment variables so that private
+paths never enter the repository:
+
+    export STRIATAL_CLINICAL64_DENOISE_ROOT=/private/clinical64_denoising
+    export STRIATAL_CURRENT64_MANIFEST=/private/current64_input_manifest.tsv
+    export STRIATAL_CURRENT64_GROUP_TABLE=/private/current64_group_table.tsv
+    python src/clinical64/preprocessing/run_matched_denoising.py
+
+    export STRIATAL_ANALYSIS_ROOT=/private/analysis_root
+    python src/clinical64/functional_connectivity/build_timeseries_and_fingerprints.py
+
+The connectivity program applies the validated, unique, ascending 2847-to-2608
+row-index mapping. It does not reconstruct the common space by nearest-coordinate
+matching. The mapping can also be inspected independently:
+
+    python src/clinical64/individual_gradients/map_reference_to_common.py \
+      --reference-gradients /private/reference_gradients/group_gradients.npy \
+      --row-mapping /private/row_mapping_2847_to_2608.npy \
+      --output /private/reference_gradients/group_gradients_2608x10.npy
+
+Run the verified individual-gradient implementation with the same analysis
+root and the 2608-space mask:
+
+    export STRIATAL_CURRENT2608_MASK=/private/current64_analysis_mask.nii.gz
+    python src/clinical64/individual_gradients/run_fixed_reference_gradients.py
+
+Each 2608 x 65 subject fingerprint is embedded with the reference settings.
+Components are sign-oriented to the corresponding mapped reference component;
+no permutation is applied. The sign-oriented gradients are cast through the
+historical float32 intermediate, both subject and reference matrices are
+column-centered, and a ten-component orthogonal Procrustes rotation is solved
+by SVD. Scaling is disabled, reflection is allowed, and there is no
+post-Procrustes sign flip. The 64-person group gradient produced by that script
+is QC-only and is never used as the alignment reference.
+
+## Downstream gradient/bin analyses
+
+The 375-participant Stage x G1 mixed model is implemented in
+src/reference375/statistical_analysis/run_stage_g1_mixed_model.py.
+
+The canonical reward-stage profile builder should always be preflighted before
+writing:
+
+    python src/clinical64/reward_stage/freeze_and_build_profiles.py \
+      --project-root /private/project \
+      --output-root /private/current64_rerun \
+      --check-only
+
+After input review, omit --check-only, set
+STRIATAL_CURRENT64_ROOT=/private/current64_rerun, and run
+src/clinical64/reward_stage/run_stage_analyses.py. Current-bin normative,
+stage-specific, and SMA/IFG analyses are separate shell entry points:
+
+    src/clinical64/normative_deviation/run_current_bin_analysis.sh
+    src/clinical64/reward_stage/run_stage_specific_current_bins.sh
+    src/clinical64/sma_ifg/run_bin10_subfamily.sh
+
+src/clinical64/normative_deviation/run_normative_old_bins.py is retained only
+for reproduction of the frozen old-bin branch. Do not combine its bin labels
+with current-bin outputs.
+
+## Input checks and data boundary
+
+The calculation scripts check expected subject, voxel, ROI, component, mapping,
+and finite-value constraints before writing. Output directories are protected
+against accidental overwrite where supported. See
+docs/DATA_EXCLUSION_POLICY.md for the files that must remain outside Git.
+
+The upstream mask/connectome entries are explicit-input parameterizations of
+the recovered computation, not a distribution of the private source data. The
+exact frozen inputs and approved orientation template are therefore required
+for numerical reproduction of the reported arrays.
+
+Software is released under the MIT License; that license does not grant
+permission to redistribute participant data or third-party atlas resources.

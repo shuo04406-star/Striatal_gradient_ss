@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 """Create deterministic equal-rank G1 bins from a 2847 x 10 gradient matrix.
 
-This is a reconstructed, verified-equivalent release implementation, not the
-unrecovered historical orientation/bin writer. The G1 sign must be selected
-explicitly and documented for every run.
+The G1 sign must be selected explicitly because gradient signs are arbitrary.
 """
 
 from __future__ import annotations

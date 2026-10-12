@@ -2,12 +2,12 @@ cff-version: 1.2.0
 message: "Please cite this software and the associated manuscript. Replace the provisional contributor entry before publication."
 title: "Striatal Functional Connectivity Gradients"
 type: software
-version: "0.1.0-private-review"
-date-released: 2026-10-08
+version: "1.0.0"
+date-released: 2026-10-12
 license: MIT
 authors:
   - name: "Project contributors (provisional)"
-abstract: "Audited analysis code for a 375-person striatal reference gradient and a 64-person clinical cohort."
+abstract: "Analysis code for a 375-person striatal reference gradient and a 64-person clinical cohort."
 keywords:
   - functional connectivity
   - gradients

@@ -8,9 +8,19 @@ reference375:
   denoising_manifest: null
   denoising_output: null
   denoising_qc: null
+  denoised_bold_manifest: null
+  mask_reference_image_3d: null
+  source_vst_mask: null
+  source_caudate_mask: null
+  source_putamen_mask: null
+  source_roi_mask_manifest_65: null
+  whole_striatum_seed_mask_2847: null
+  roi_mask_manifest_65: null
   fingerprint_directory: null
   group_mean_fingerprint: null
   voxel_coordinates: null
+  gradient_orientation_template: null
+  gradient_output_directory: null
 
 clinical64:
   matched_denoising_root: null
@@ -19,6 +29,7 @@ clinical64:
   current_2608_mask: null
   exact_row_mapping_2847_to_2608: null
   current_bin_table: null
+  individual_gradient_output: null
 
 # Environment-variable interface used by the retained scripts:
 # STRIATAL_ANALYSIS_ROOT, STRIATAL_CURRENT64_ROOT, STRIATAL_PYTHON_VENDOR,

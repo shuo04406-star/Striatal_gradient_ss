@@ -1,6 +1,6 @@
-# Data exclusion policy
+# Data and privacy boundary
 
-Only reviewed code, non-sensitive configuration templates, aggregate QC summaries, and provenance records may enter this repository.
+This repository contains analysis code, dependency specifications, and non-sensitive configuration templates only.
 
 Do not commit:
 
@@ -13,4 +13,4 @@ Do not commit:
 - atlases, masks, or parcellations lacking explicit redistribution permission;
 - generated outputs unless they have undergone a separate disclosure review.
 
-Before each commit, inspect `git status --short`, regenerate `GITHUB_FILE_MANIFEST.tsv`, rerun the credential/path/large-file scan, and stage files explicitly. Do not use a broad add command in the original research directory.
+Keep all paths in an untracked local configuration or environment variables. Before each release, inspect the staged file list and scan it for credentials, private absolute paths, blocked data extensions, and unexpectedly large files.
