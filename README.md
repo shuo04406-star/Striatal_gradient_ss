@@ -61,7 +61,7 @@ or:
     python -m venv .venv
     python -m pip install -r environments/requirements.txt
 
-The three shell entry points require Bash. Copy config/paths.example.yaml
+The core shell entry points require Bash. Copy config/paths.example.yaml
 outside version control and fill it with private paths, or use the environment
 variables named in that template.
 
@@ -225,6 +225,20 @@ stage-specific, and SMA/IFG analyses are separate shell entry points:
 src/clinical64/normative_deviation/run_normative_old_bins.py is retained only
 for reproduction of the frozen old-bin branch. Do not combine its bin labels
 with current-bin outputs.
+
+## Supplementary resting-state analyses
+
+| Module | Main entry point |
+|---|---|
+| Reference validation | [Anatomical bins](src/reference375/validation/plot_G1_bins_by_anatomy_2847.py) and [random slopes](src/reference375/validation/02_stage_g1_random_slope.py) |
+| ROI and model sensitivity | [ROI deletion](src/clinical64/sensitivity_analysis/roi_deletion/run_step3a_subfamily_robustness.py), [Insula contributions](src/clinical64/sensitivity_analysis/insula_contributions/run_local_contribution_sensitivity.py) and [MixedLM/GEE](src/clinical64/sensitivity_analysis/mixedlm_vs_gee/01_same_data_method_audit.py) |
+| Independent regional FC | [SMA, IFG and Cingulate curves and slopes](src/clinical64/regional_analysis/three_regions/run_three_region_rawFC_validation.R) |
+| Final64 database | [Subject-level export](src/clinical64/data_preparation/build_subject_level_exports.py) and [database lock and QC](src/clinical64/data_preparation/build_final64_lock_audit.py) |
+| Clinical associations | [Full 119-test analysis](src/clinical64/clinical_associations/full_scale/run_full_reanalysis.R), [HC/SZ and interaction audit](src/clinical64/clinical_associations/full_scale/audit_all_scale_imaging_groups.R) and [TEPS/ACIPS follow-up](src/clinical64/clinical_associations/teps_acips_followup/run_followup.py) |
+
+The [supplementary analysis guide](docs/SUPPLEMENTARY_ANALYSES.md) documents
+the frozen inputs, clinical scoring and matching, model and FC sensitivity
+branches, plotting workflows, and upstream T1 and fMRIPrep utilities.
 
 ## Input checks and data boundary
 
