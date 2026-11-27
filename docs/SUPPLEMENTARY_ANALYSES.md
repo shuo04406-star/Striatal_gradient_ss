@@ -64,6 +64,7 @@ record remain required for end-to-end preprocessing reproduction. The
 | [Finite-sample GEE](../src/clinical64/sensitivity_analysis/gee_finite_sample/01_run_finite_sample_audit.py) | Uses the previous audit, bias-reduced GEE, cluster jackknife, leave-one-subject-out and wild-cluster bootstrap. |
 | [Variance and dispersion](../src/clinical64/supplementary_analysis/independent_statistical_verification.py) | Independent verification of covariance models and FC variability. The companion meeting figure reads the saved STEP2 tables. |
 | [Individual anatomical ordering](../src/clinical64/supplementary_analysis/anatomy/run_G1_regional_ordering.py) | Uses frozen 2608-voxel individual G1, exact row mapping and approved anatomy masks. The same directory contains anatomical separation, eta-squared and covariate adjustments. |
+| [Individual G1 Definition B](../src/clinical64/supplementary_analysis/individual_g1_bins/run_fixed375_normative_10bins.py) / [Trend contrasts](../src/clinical64/supplementary_analysis/individual_g1_bins/run_fixed375_trend_contrasts.py) | Archived individual-G1 bin construction, anatomical composition and trend sensitivity using the signed and reranked 2608-voxel reference. Run the bin analysis first. |
 | [SMA and IFG FC profile](../src/clinical64/regional_analysis/profile_similarity/run_step4_profile_similarity.py) | Decomposes the FC profiles into offset, slope and shape and compares profile similarity. |
 | [Regional specificity](../src/clinical64/regional_analysis/regional_specificity/run_step5_regional_specificity.py) | Compares SMA and IFG with other ROIs in their respective stages, with leave-one-out and bootstrap checks. |
 | [Six-ROI IFG](../src/clinical64/regional_analysis/ifg_6roi/run_ifg_6roi_reanalysis.R) / [Three-region FC](../src/clinical64/regional_analysis/three_regions/run_three_region_rawFC_validation.R) | Run the IFG analysis first. The three-region check reads its saved comparison table and produces independent SMA, IFG and Cingulate FC curves and slope tests. |
@@ -72,7 +73,8 @@ record remain required for end-to-end preprocessing reproduction. The
 The existing [current-bin analysis](../src/clinical64/normative_deviation/run_current_bin_analysis.sh)
 already writes the Current-versus-Old bin comparison. Use frozen Current bins
 for the normative or Pearson-contribution modules and frozen Definition A for
-the retained stage FC slopes. The historical Old bins remain a separate
+the retained stage FC slopes. The individual-G1 Definition B scripts also use an independent binning rule.
+The historical Old bins remain a separate
 downstream definition. The follow-up audit reads both relevant definitions.
 These are resting-state ROI classifications.
 
