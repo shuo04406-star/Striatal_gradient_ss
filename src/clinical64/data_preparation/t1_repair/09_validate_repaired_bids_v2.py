@@ -1,2 +1,0 @@
-from v2_seriesuid_common import run_stage
-run_stage("stage09_validate_repaired_bids_v2")

@@ -1,2 +1,0 @@
-from v2_seriesuid_common import run_stage
-run_stage("stage02_inventory_all_dicoms_by_uid")

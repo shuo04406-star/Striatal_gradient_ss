@@ -234,11 +234,11 @@ with current-bin outputs.
 | ROI and model sensitivity | [ROI deletion](src/clinical64/sensitivity_analysis/roi_deletion/run_step3a_subfamily_robustness.py), [Insula contributions](src/clinical64/sensitivity_analysis/insula_contributions/run_local_contribution_sensitivity.py) and [MixedLM/GEE](src/clinical64/sensitivity_analysis/mixedlm_vs_gee/01_same_data_method_audit.py) |
 | Independent regional FC | [SMA, IFG and Cingulate curves and slopes](src/clinical64/regional_analysis/three_regions/run_three_region_rawFC_validation.R) |
 | Final64 database | [Subject-level export](src/clinical64/data_preparation/build_subject_level_exports.py) and [database lock and QC](src/clinical64/data_preparation/build_final64_lock_audit.py) |
-| Clinical associations | [Full 119-test analysis](src/clinical64/clinical_associations/full_scale/run_full_reanalysis.R), [HC/SZ and interaction audit](src/clinical64/clinical_associations/full_scale/audit_all_scale_imaging_groups.R) and [TEPS/ACIPS follow-up](src/clinical64/clinical_associations/teps_acips_followup/run_followup.py) |
+| Clinical associations | [Clinical extension](src/clinical64/clinical_associations/clinical_extension/01_audit_clinical_data.R), [stage coupling](src/clinical64/clinical_associations/stage_coupling/run_all_stage_coupling.py) and [measurement precision](src/clinical64/clinical_associations/measurement_precision/run_all_measurement_precision.py) |
 
 The [supplementary analysis guide](docs/SUPPLEMENTARY_ANALYSES.md) documents
 the frozen inputs, clinical scoring and matching, model and FC sensitivity
-branches, plotting workflows, and upstream T1 and fMRIPrep utilities.
+branches, plotting workflows, and resting-state BIDS assembly.
 
 ## Input checks and data boundary
 

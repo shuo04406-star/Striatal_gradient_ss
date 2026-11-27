@@ -29,8 +29,6 @@ For Figure 2, use **--input** and **--out**. Its three reproduction checks read
 | [Subject-level export](../src/clinical64/data_preparation/build_subject_level_exports.py) | Extracts participant FC profiles, slopes and similarities from frozen analyses. Joins clinical, questionnaire and previously prepared behavioral records. |
 | [Freeze and audit Final64](../src/clinical64/data_preparation/build_final64_lock_audit.py) | Cross-checks exports against frozen clinical and imaging sources. Writes the private analysis-ready master, sample matrix, and manifest. |
 | [Build rest-only single-T1w BIDS](../src/clinical64/data_preparation/upstream/build_rest_singleT1_v1.py) | Historical rest-only BIDS assembly using already selected T1 scans and a private cohort configuration. The PowerShell wrapper is in the same directory. |
-| [T1 series repair](../src/clinical64/data_preparation/t1_repair/01_verify_subject_mapping.py) | Historical SeriesInstanceUID repair, with steps 01–09 in the same directory. Uses authorized DICOM, BIDS and v1 QC inputs. |
-| [fMRIPrep rerun template](../src/clinical64/data_preparation/upstream/rerun_fmriprep_repaired_subjects_v2_TEMPLATE.sh) | Resting-state T1-repair rerun configuration from the local record. Requires an approved private participant list, BIDS tree and FreeSurfer license. |
 
 Set **STRIATAL_CLINICAL_SOURCE_ROOT** to the authorized clinical working tree
 and **STRIATAL_PROJECT_ROOT** to the authorized frozen analysis tree. The
@@ -40,11 +38,6 @@ export reads the three private workbooks from
 (**STRIATAL_REST_BUILD_CONFIG**) with the keys **subjects** (ordered list),
 **two_run_subject**, **t1_verification_subject**, and
 **selected_t1_filenames** (participant-to-filename mapping).
-**STRIATAL_T1_REPAIR_CONFIG** points to a private JSON file with
-**target_subjects** and **excluded_subjects** arrays for the historical T1
-repair stages. The rerun template reads **STRIATAL_BIDS_DIR**,
-**STRIATAL_FMRIPREP_OUTPUT**, **STRIATAL_WORK_ROOT**, **STRIATAL_FS_LICENSE** and
-**STRIATAL_T1_RERUN_LIST**.
 
 The exact scanner/run selection ledgers and cohort-wide fMRIPrep execution
 record remain required for end-to-end preprocessing reproduction. The
@@ -75,7 +68,7 @@ already writes the Current-versus-Old bin comparison. Use frozen Current bins
 for the normative or Pearson-contribution modules and frozen Definition A for
 the retained stage FC slopes. The individual-G1 Definition B scripts also use an independent binning rule.
 The historical Old bins remain a separate
-downstream definition. The follow-up audit reads both relevant definitions.
+downstream definition.
 These are resting-state ROI classifications.
 
 ## Final64 clinical associations
@@ -86,24 +79,7 @@ These are resting-state ROI classifications.
    working tree. Step 03 checks private PANSS reference summaries from
    **STRIATAL_PANSS_REFERENCE_RDS** (a named R list of **n**, **mean** and **sd**
    for each PANSS endpoint). Source conflict decisions come from the saved audit.
-2. From the Final64 locked inputs, run [the full 119-test analysis](../src/clinical64/clinical_associations/full_scale/run_full_reanalysis.R),
-   [the subgroup and interaction audit](../src/clinical64/clinical_associations/full_scale/audit_all_scale_imaging_groups.R),
-   then [the requested manuscript figures](../src/clinical64/clinical_associations/full_scale/make_requested_manuscript_figures.R).
-   Set **STRIATAL_FINAL64_LOCK** to the locked dataset root and
-   **STRIATAL_FULL_SCALE_OUTPUT** to a private analysis directory.
-   The procedure retains the eligible association families, direct HC/SZ
-   interactions, residualization and multiplicity adjustments.
-3. The [TEPS/ACIPS follow-up](../src/clinical64/clinical_associations/teps_acips_followup/run_followup.py)
-   audits item scoring, compares actual and covariate-predicted TEPS values,
-   examines similarity direction and original FC profiles, and runs
-   stage-specific, cross-stage and clinical covariate checks. Supply
-   **--analysis-root**, **--project-root** and **--output-dir**. Use **--rscript**
-   if Rscript is outside PATH, or **--tables-only** to omit figures. The
-   analysis root uses the authorized frozen database and full-scale tables in
-   their recorded directory layout. Set **STRIATAL_DISPUTED_SUBJECT_ID**
-   privately from the formal source-conflict audit for the preserved
-   single-participant sensitivity.
-4. [Stage coupling](../src/clinical64/clinical_associations/stage_coupling/run_all_stage_coupling.py)
+2. [Stage coupling](../src/clinical64/clinical_associations/stage_coupling/run_all_stage_coupling.py)
    and [measurement precision](../src/clinical64/clinical_associations/measurement_precision/run_all_measurement_precision.py)
    are separate supplementary workflows. They read authorized frozen profiles,
    behavior, item scores and prior clinical results. The precision analysis
@@ -129,13 +105,10 @@ These values are required for the original comparison gates.
 
 The core Python dependencies are in [requirements.txt](../environments/requirements.txt).
 Additional Python packages for the supplementary modules are openpyxl,
-Pillow, PyMuPDF, pydicom and tzdata where the OS does not provide the IANA
-database. Series repair also requires dcm2niix. Use the effective R package
-environment captured for the historical run when matching its rendering or
-numerical output. The full-scale screens and follow-up use R with boot, broom,
-dplyr, ggplot2, patchwork, pdftools, png, purrr, ragg, readr, sandwich, scales,
-stringr, svglite, systemfonts, tibble and tidyr. The November follow-up used
-Python 3.14 and R 4.6.1. Use Bash for the fMRIPrep template.
+Pillow, PyMuPDF and tzdata where the OS does not provide the IANA database.
+The regional analyses and plotting scripts use R packages including dplyr,
+ggplot2, patchwork, png, ragg, readr, svglite and tidyr. Use the R environment
+captured for the historical run when reproducing its rendering or numerical output.
 
 This release preserves the executed methods, archived validation variants and
 independent conference/variance verification as identified above. Participant
